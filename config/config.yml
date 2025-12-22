@@ -1,0 +1,9 @@
+Env: "Local"
+database:
+  user: "alex"
+  password: "12345678"
+  dbName: "auth_db"
+
+grpc:
+  timeout: 5s
+
