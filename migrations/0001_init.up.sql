@@ -1,0 +1,8 @@
+CREATE TABLE IF NOT EXISTS users
+(
+    id SERIAL PRIMARY KEY,
+    userName TEXT NOT NULL,
+    email TEXT NOT NULL UNIQUE,
+    pass_hash BYTEA NOT NULL,
+    uid TEXT NOT NULL UNIQUE
+);

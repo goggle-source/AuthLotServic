@@ -1,0 +1,48 @@
+
+
+services:
+
+  db:
+    image: postgres:18
+
+    environment:
+      - POSTGRES_USER=alex
+      - POSTGRES_PASSWORD=12345678
+      - POSTGRES_DB=authDB
+    
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U alex -d authDB"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 20s
+    
+    command: >
+      postgres
+      -c listen_addresses="*"
+      -c port=5432
+      -c max_connections=100
+      -c shared_buffers=256MB
+    
+    ports:
+      - "5432:5432"
+    
+    networks:
+      - app-network
+    
+  app:
+    build: .
+
+    ports:
+      - "54321:54321"
+
+    depends_on:
+      db:
+        condition: service_healthy
+    
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    driver: bridge
