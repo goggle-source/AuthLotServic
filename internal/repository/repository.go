@@ -5,12 +5,10 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"log/slog"
 	"time"
 
 	"github.com/goggle-source/authLotServic/domain"
 	"github.com/goggle-source/authLotServic/internal/config"
-	"github.com/goggle-source/authLotServic/internal/lib/logger"
 	"github.com/goggle-source/authLotServic/internal/metric"
 	"github.com/goggle-source/authLotServic/internal/models"
 	"github.com/lib/pq"
@@ -19,11 +17,10 @@ import (
 )
 
 type Db struct {
-	DB  *sql.DB
-	log *slog.Logger
+	DB *sql.DB
 }
 
-func Init(cfg *config.Cfg, log *slog.Logger) *Db {
+func Init(cfg *config.Cfg) *Db {
 	conn := fmt.Sprintf("postgresql://%s:%s@%s:%d/%s?sslmode=disable",
 		cfg.Db.User, cfg.Db.Password, cfg.Db.Host, cfg.Db.Port, cfg.Db.DbName)
 	db, err := sql.Open("postgres", conn)
@@ -43,23 +40,17 @@ func Init(cfg *config.Cfg, log *slog.Logger) *Db {
 	db.SetConnMaxLifetime(cfg.Db.ConnMaxLifeTime)
 
 	return &Db{
-		DB:  db,
-		log: log,
+		DB: db,
 	}
 }
 
 func (d *Db) Register(ctx context.Context, userAddDatabase models.UserAddDatabase) error {
 	const op = "repository.Register"
 
-	log := d.log.With(slog.String("op", op))
-
-	log.Info("start register user")
-
 	_, err := d.DB.ExecContext(ctx, `INSERT INTO users (userName, email, pass_hash, uid) VALUES 
 	($1, $2, $3, $4)`, userAddDatabase.Name, userAddDatabase.Email,
 		userAddDatabase.PasswordHash, userAddDatabase.Id)
 	if err != nil {
-		log.Error("error add user in database", logger.Err(err))
 		if pqErr, ok := err.(*pq.Error); ok {
 			if pqErr.Code == "23505" {
 				return fmt.Errorf("%s:%w", op, domain.ErrEmail)
@@ -68,23 +59,16 @@ func (d *Db) Register(ctx context.Context, userAddDatabase models.UserAddDatabas
 		return fmt.Errorf("%s:%w", op, err)
 	}
 
-	log.Info("success register user")
-
 	return nil
 }
 
 func (d *Db) Login(ctx context.Context, userValidateInDatabase models.UserValidateInDatabase) (string, string, error) {
 	const op = "repository.Login"
 
-	log := d.log.With(slog.String("op", op))
-
-	log.Info("start login user")
-
 	var name, id string
 	var passHash []byte
 	err := d.DB.QueryRowContext(ctx, "SELECT userName, uid,  pass_hash FROM users WHERE email = $1", userValidateInDatabase.Email).Scan(&name, &id, &passHash)
 	if err != nil {
-		log.Error("error get user for database", logger.Err(err))
 		if errors.Is(err, sql.ErrNoRows) {
 			return "", "", fmt.Errorf("%s:%w", op, domain.ErrUserNoFound)
 		}
@@ -93,10 +77,8 @@ func (d *Db) Login(ctx context.Context, userValidateInDatabase models.UserValida
 	// вынести потом bcrypt в servic слой
 
 	if err := bcrypt.CompareHashAndPassword(passHash, []byte(userValidateInDatabase.Password)); err != nil {
-		log.Error("password not equal to password from database", logger.Err(err))
 		return "", "", fmt.Errorf("%s:%w", op, domain.ErrPasswordOrEmail)
 	}
-	log.Info("success Login user")
 
 	return name, id, nil
 }
@@ -104,45 +86,35 @@ func (d *Db) Login(ctx context.Context, userValidateInDatabase models.UserValida
 func (d *Db) HealthCheack(ctx context.Context) (metric.DBMetric, error) {
 	const op = "repository.Check"
 
-	log := d.log.With(slog.String("op", op))
-
-	log.Info("start healthy")
-
 	var result metric.DBMetric
 	if err := d.DB.Ping(); err != nil {
-		log.Error("the database is not responding", logger.Err(err))
 		result.ConnDB = false
 		return result, fmt.Errorf("%s:%w", op, err)
 	}
 
 	_, err := d.DB.ExecContext(ctx, "SELECT 1")
 	if err != nil {
-		log.Error("the database did not complete the request", logger.Err(err))
 		result.ConnDB = false
 		return result, fmt.Errorf("%s:%w", op, err)
 	}
 
 	err = d.DB.QueryRowContext(ctx, "SELECT count(*) FROM pg_stat_activity WHERE state = `active` ").Scan(&result.ActiveConnection)
 	if err != nil {
-		log.Error("couldn't get the number of active connections", logger.Err(err))
 		result.ActiveConnection = 0
 		return result, fmt.Errorf("%s:%w", op, err)
 	}
 
 	err = d.DB.QueryRowContext(ctx, "SELECT count(*) FROM pg_stat_activity").Scan(&result.CountConnection)
 	if err != nil {
-		log.Error("couldn't get the number of all connections", logger.Err(err))
 		result.CountConnection = 0
 		return result, fmt.Errorf("%s:%w", op, err)
 	}
 
 	err = d.DB.QueryRowContext(ctx, "SELECT * FROM pg_stat_wal()").Scan(&result.CountMemory)
 	if err != nil {
-		log.Error("couldn't get the number memory", logger.Err(err))
 		result.CountMemory = 0
 		return result, fmt.Errorf("%s:%w", op, err)
 	}
-	log.Info("success healthycheack")
 
 	return result, nil
 }
@@ -150,22 +122,15 @@ func (d *Db) HealthCheack(ctx context.Context) (metric.DBMetric, error) {
 func (d *Db) ValidateUserId(ctx context.Context, id string) (bool, error) {
 	const op = "repository.ValidateUserId"
 
-	log := d.log.With(slog.String("op", op))
-
-	log.Info("start validateUserID")
-
 	var email string
 
 	err := d.DB.QueryRowContext(ctx, "SELECT email FROM users WHERE uid = $1", id).Scan(&email)
 	if err != nil {
-		log.Error("error get email users", logger.Err(err))
 		if errors.Is(err, sql.ErrNoRows) {
 			return false, fmt.Errorf("%s:%w", op, domain.ErrUserNoFound)
 		}
 		return false, fmt.Errorf("%s:%w", op, err)
 	}
-
-	log.Info("success validate userID")
 
 	if email != "" {
 		return true, nil
