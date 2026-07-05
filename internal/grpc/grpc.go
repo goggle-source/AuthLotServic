@@ -17,7 +17,7 @@ type AuthServer interface {
 	Register(ctx context.Context, userRequest models.UserRegister) (token string, err error)
 	Login(ctx context.Context, userLogin models.UserLogin) (name string, token string, err error)
 	HealthyCheack(ctx context.Context) (map[string]string, error)
-	ValidateUser(ctx context.Context, userID int) (bool, error)
+	ValidateUser(ctx context.Context, userID string) (bool, error)
 }
 
 type ServerAPI struct {
@@ -44,6 +44,7 @@ func (s *ServerAPI) Login(ctx context.Context, in *auth.LoginUserRequest) (*auth
 	}
 
 	if err := s.validate.Struct(userLogin); err != nil {
+		log.Error("error validate date", logger.Err(err))
 		return nil, ValidationErrValidator(err)
 	}
 
@@ -121,12 +122,12 @@ func (s *ServerAPI) ValidateUserId(ctx context.Context, in *auth.UserIdRequest) 
 
 	log.Info("start validateUserId")
 
-	if in.Id == 0 {
+	if in.GetUserID() == "" {
 		log.Error("is not id")
 		return &auth.ValidIsIdResponse{}, status.Error(codes.InvalidArgument, "id is required")
 	}
 
-	isValid, err := s.auth.ValidateUser(ctx, int(in.Id))
+	isValid, err := s.auth.ValidateUser(ctx, in.GetUserID())
 	if err != nil {
 		log.Error("error validateUser", logger.Err(err))
 		return &auth.ValidIsIdResponse{}, ValidationError(err)

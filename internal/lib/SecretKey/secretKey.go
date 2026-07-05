@@ -11,7 +11,7 @@ import (
 func LoadPrivateKey(path string) (*rsa.PrivateKey, error) {
 	data, err := os.ReadFile(path)
 	if err != nil {
-		return nil, errors.New("file is not found")
+		return nil, errors.New("failed to read file")
 	}
 
 	block, _ := pem.Decode(data)
@@ -27,7 +27,7 @@ func LoadPrivateKey(path string) (*rsa.PrivateKey, error) {
 	rsaKey, ok := key.(*rsa.PrivateKey)
 
 	if !ok {
-		return nil, err
+		return nil, errors.New("key is not private key")
 	}
 
 	return rsaKey, nil

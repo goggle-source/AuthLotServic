@@ -9,5 +9,5 @@ var (
 	ErrMaxConn  = errors.New("the maximum number of connections is exceeded")
 	ErrNoRights = errors.New("no rights")
 	ErrPassword = errors.New("invalid password")
-	ErrNoFound  = errors.New("user is not found")
+	ErrLogin    = errors.New("invalid login")
 )

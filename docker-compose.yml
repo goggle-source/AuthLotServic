@@ -2,7 +2,7 @@
 
 services:
 
-  db:
+  dbauth:
     image: postgres:18
 
     environment:
@@ -28,21 +28,23 @@ services:
       - "5432:5432"
     
     networks:
-      - app-network
+      - shared-network
     
-  app:
+  authserver:
     build: .
 
     ports:
       - "54321:54321"
 
     depends_on:
-      db:
+      dbauth:
         condition: service_healthy
     
     networks:
-      - app-network
+      - shared-network
 
 networks:
-  app-network:
-    driver: bridge
+
+  shared-network:
+    external: true
+    name: shared-network

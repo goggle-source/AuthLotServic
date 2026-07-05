@@ -11,5 +11,5 @@ var (
 	ErrRequired       = errors.New("argument is required")
 	ErrNoCorrectEmail = errors.New("email is not correct")
 	ErrArgumnetLength = errors.New("invalid length")
-	ErrNoFound        = errors.New("user is not found")
+	ErrLogin          = errors.New("invalid login")
 )

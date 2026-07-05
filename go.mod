@@ -4,7 +4,7 @@ go 1.24.2
 
 require (
 	github.com/go-playground/validator/v10 v10.30.1
-	github.com/goggle-source/authLotProto v0.1.4
+	github.com/goggle-source/authLotProto v0.1.41
 	github.com/golang-jwt/jwt/v5 v5.3.0
 	github.com/golang-migrate/migrate/v4 v4.19.1
 	github.com/google/uuid v1.6.0

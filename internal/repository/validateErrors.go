@@ -18,7 +18,7 @@ func ValidateErrorsPostgresql(err error) error {
 	if !ok {
 		return ValidationErrorsSql(err)
 	}
-	
+
 	err, ok = arrErr[pqErr.Code]
 	if !ok {
 		return ErrDatabase
@@ -29,7 +29,7 @@ func ValidateErrorsPostgresql(err error) error {
 
 func ValidationErrorsSql(err error) error {
 	arr := map[error]error{
-		sql.ErrNoRows: ErrNoFound,
+		sql.ErrNoRows: ErrLogin,
 	}
 
 	value, ok := arr[err]

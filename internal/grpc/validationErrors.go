@@ -14,11 +14,10 @@ type Err struct {
 
 var arrErr = map[error]Err{
 	servic.ErrGenerateJWT:    {Code: codes.Internal, Err: ErrInternal},
-	servic.ErrClientEnuqie:   {Code: codes.InvalidArgument, Err: ErrClientEnuqie},
 	servic.ErrClientNotNull:  {Code: codes.InvalidArgument, Err: ErrClientNotNull},
 	servic.ErrValidateToken:  {Code: codes.InvalidArgument, Err: ErrNoValidToken},
 	servic.ErrClientPassword: {Code: codes.InvalidArgument, Err: ErrClientPassword},
-	servic.ErrNoFound:        {Code: codes.InvalidArgument, Err: ErrNoFound},
+	servic.ErrLogin:          {Code: codes.InvalidArgument, Err: ErrLogin},
 }
 
 func ValidationError(err error) error {

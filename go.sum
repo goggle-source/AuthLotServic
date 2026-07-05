@@ -44,6 +44,8 @@ github.com/go-viper/mapstructure/v2 v2.4.0 h1:EBsztssimR/CONLSZZ04E8qAkxNYq4Qp9L
 github.com/go-viper/mapstructure/v2 v2.4.0/go.mod h1:oJDH3BJKyqBA2TXFhDsKDGDTlndYOZ6rGS0BRZIxGhM=
 github.com/goggle-source/authLotProto v0.1.4 h1:OYc+e4GZpGgm24j2ONDbfzp8WNugQNlBQ8za0X8P900=
 github.com/goggle-source/authLotProto v0.1.4/go.mod h1:hKKqVS8PlyP4wdy7Epofa93FVrnzkHr8AmF9pF+NyBI=
+github.com/goggle-source/authLotProto v0.1.41 h1:8JpPo5e0RnxzMnbIoEha3/DmJ+3s9JSCkJk8w9cWRvM=
+github.com/goggle-source/authLotProto v0.1.41/go.mod h1:hKKqVS8PlyP4wdy7Epofa93FVrnzkHr8AmF9pF+NyBI=
 github.com/gogo/protobuf v1.3.2 h1:Ov1cvc58UF3b5XjBnZv7+opcTcQFZebYjWzi34vdm4Q=
 github.com/gogo/protobuf v1.3.2/go.mod h1:P1XiOD3dCwIKUDQYPy72D8LYyHL2YPYrpS2s69NZV8Q=
 github.com/golang-jwt/jwt/v5 v5.3.0 h1:pv4AsKCKKZuqlgs5sUmn4x8UlGa0kEVt/puTpKx9vvo=

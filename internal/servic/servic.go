@@ -17,14 +17,14 @@ import (
 )
 
 const (
-	cost = 20
+	cost = 15
 )
 
 type Database interface {
 	Register(ctx context.Context, userAddDatabase models.UserAddDatabase) error
 	Login(ctx context.Context, userValidateInDatabase models.UserValidateInDatabase) (name string, uid string, err error)
 	HealthCheack(ctx context.Context) (metric.DBMetric, error)
-	ValidateUserId(ctx context.Context, id int) (bool, error)
+	ValidateUserId(ctx context.Context, id string) (bool, error)
 }
 
 type ServicApp struct {
@@ -53,7 +53,7 @@ func (s *ServicApp) Register(ctx context.Context, userRegister models.UserRegist
 	uid := uuid.New()
 	id := uid.String()
 
-	bytes, err := bcrypt.GenerateFromPassword([]byte(userRegister.Password), 20)
+	bytes, err := bcrypt.GenerateFromPassword([]byte(userRegister.Password), cost)
 	if err != nil {
 		return "", ValidationError(err)
 	}
@@ -151,14 +151,14 @@ func (s *ServicApp) HealthyCheack(ctx context.Context) (map[string]string, error
 	return details, nil
 }
 
-func (s *ServicApp) ValidateUser(ctx context.Context, id int) (bool, error) {
+func (s *ServicApp) ValidateUser(ctx context.Context, id string) (bool, error) {
 	const op = "servic.ValidateUser"
 
 	log := s.log.With(
 		slog.String("op", op),
 	)
 
-	log.Info("start validateUser", slog.Int("userId", id))
+	log.Info("start validateUser", slog.String("userId", id))
 
 	isValid, err := s.d.ValidateUserId(ctx, id)
 	if err != nil {

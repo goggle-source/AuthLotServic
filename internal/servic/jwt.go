@@ -20,7 +20,6 @@ func GenerateJWTToken(ctx context.Context, id string, sercretKey *rsa.PrivateKey
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(72 * time.Hour)),
 			IssuedAt:  jwt.NewNumericDate(time.Now()),
-			NotBefore: jwt.NewNumericDate(time.Now()),
 		},
 	}
 

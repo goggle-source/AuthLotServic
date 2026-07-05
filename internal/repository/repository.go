@@ -52,12 +52,12 @@ func (d *Db) Register(ctx context.Context, userAddDatabase models.UserAddDatabas
 
 	log.Info("start register user")
 
-	rows := d.DB.QueryRowContext(ctx, `INSERT INTO users (userName, email, pass_hash, uid) VALUES 
+	_, err := d.DB.ExecContext(ctx, `INSERT INTO users (userName, email, pass_hash, uid) VALUES 
 	($1, $2, $3, $4)`, userAddDatabase.Name, userAddDatabase.Email,
 		userAddDatabase.PasswordHash, userAddDatabase.Id)
-	if rows.Err() != nil {
-		log.Error("error add user in database", logger.Err(rows.Err()))
-		return ValidateErrorsPostgresql(rows.Err())
+	if err != nil {
+		log.Error("error add user in database", logger.Err(err))
+		return ValidateErrorsPostgresql(err)
 	}
 
 	log.Info("success register user")
@@ -79,6 +79,7 @@ func (d *Db) Login(ctx context.Context, userValidateInDatabase models.UserValida
 		log.Error("error get user for database", logger.Err(err))
 		return "", "", ValidateErrorsPostgresql(err)
 	}
+	// вынести потом bcrypt в servic слой
 
 	if err := bcrypt.CompareHashAndPassword(passHash, []byte(userValidateInDatabase.Password)); err != nil {
 		log.Error("password not equal to password from database", logger.Err(err))
@@ -110,7 +111,7 @@ func (d *Db) HealthCheack(ctx context.Context) (metric.DBMetric, error) {
 		return result, ValidateErrorsPostgresql(err)
 	}
 
-	err = d.DB.QueryRowContext(ctx, "SELECT count(*) FROM pg_stat_activity WHERE state = `active`").Scan(result.ActiveConnection)
+	err = d.DB.QueryRowContext(ctx, "SELECT count(*) FROM pg_stat_activity WHERE state = `active` ").Scan(&result.ActiveConnection)
 	if err != nil {
 		log.Error("couldn't get the number of active connections", logger.Err(err))
 		result.ActiveConnection = 0
@@ -135,7 +136,7 @@ func (d *Db) HealthCheack(ctx context.Context) (metric.DBMetric, error) {
 	return result, nil
 }
 
-func (d *Db) ValidateUserId(ctx context.Context, id int) (bool, error) {
+func (d *Db) ValidateUserId(ctx context.Context, id string) (bool, error) {
 	const op = "repository.ValidateUserId"
 
 	log := d.log.With(slog.String("op", op))
