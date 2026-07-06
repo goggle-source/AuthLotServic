@@ -3,10 +3,12 @@ package servic
 import (
 	"context"
 	"crypto/rsa"
+	"fmt"
 	"log/slog"
 	"strconv"
 	"time"
 
+	"github.com/goggle-source/authLotServic/domain"
 	"github.com/goggle-source/authLotServic/internal/lib/logger"
 	"github.com/goggle-source/authLotServic/internal/metric"
 	"github.com/goggle-source/authLotServic/internal/models"
@@ -55,7 +57,7 @@ func (s *ServicApp) Register(ctx context.Context, userRegister models.UserRegist
 
 	bytes, err := bcrypt.GenerateFromPassword([]byte(userRegister.Password), cost)
 	if err != nil {
-		return "", ValidationError(err)
+		return "", fmt.Errorf("%s error generate hash for password:%w", op, err)
 	}
 
 	userAddDatabase := models.UserAddDatabase{
@@ -68,13 +70,13 @@ func (s *ServicApp) Register(ctx context.Context, userRegister models.UserRegist
 	err = s.d.Register(ctx, userAddDatabase)
 	if err != nil {
 		log.Error("error register user", logger.Err(err))
-		return "", ValidationError(err)
+		return "", fmt.Errorf("%s err register in database layer:%w", op, err)
 	}
 
 	token, err = GenerateJWTToken(ctx, id, s.tokenSSL)
 	if err != nil {
 		log.Error("error generate jwt token", logger.Err(err))
-		return "", ErrGenerateJWT
+		return "", fmt.Errorf("%s:%w", err, domain.ErrGenerateJWT)
 	}
 
 	log.Info("success")
@@ -99,13 +101,13 @@ func (s *ServicApp) Login(ctx context.Context, userLogin models.UserLogin) (name
 	name, id, err := s.d.Login(ctx, userValidInDatabase)
 	if err != nil {
 		log.Error("error login user", logger.Err(err))
-		return "", "", ValidationError(err)
+		return "", "", fmt.Errorf("%s err login in database layer:%w", op, err)
 	}
 
 	token, err = GenerateJWTToken(ctx, id, s.tokenSSL)
 	if err != nil {
 		log.Error("error generate jwt token", logger.Err(err))
-		return "", "", ErrGenerateJWT
+		return "", "", fmt.Errorf("%s:%w", err, domain.ErrGenerateJWT)
 	}
 
 	return name, token, nil
@@ -162,7 +164,7 @@ func (s *ServicApp) ValidateUser(ctx context.Context, id string) (bool, error) {
 
 	isValid, err := s.d.ValidateUserId(ctx, id)
 	if err != nil {
-		return false, ValidationError(err)
+		return false, fmt.Errorf("%s err validateUserID in database layer:%w", op, err)
 	}
 
 	return isValid, err
