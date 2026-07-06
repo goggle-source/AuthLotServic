@@ -2,19 +2,12 @@ package interceptor
 
 import (
 	"context"
-	"crypto/rsa"
 	"log/slog"
 	"os"
-	"sync"
 
 	"github.com/goggle-source/authLotServic/internal/lib/logger"
 	"github.com/golang-jwt/jwt/v5"
 	"google.golang.org/grpc"
-)
-
-var (
-	privateKey    *rsa.PrivateKey
-	secretKeyOnce sync.Once
 )
 
 type Claims struct {

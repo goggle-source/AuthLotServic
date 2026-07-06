@@ -93,7 +93,6 @@ func (s *ServicApp) Login(ctx context.Context, userLogin models.UserLogin) (name
 }
 
 func (s *ServicApp) HealthyCheack(ctx context.Context) (map[string]string, error) {
-	const op = "servic.HealthyCheck"
 
 	details := make(map[string]string)
 
