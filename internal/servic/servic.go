@@ -3,11 +3,12 @@ package servic
 import (
 	"context"
 	"crypto/rsa"
+	"fmt"
 	"log/slog"
 	"strconv"
 	"time"
 
-	"github.com/goggle-source/authLotServic/internal/lib/logger"
+	"github.com/goggle-source/authLotServic/domain"
 	"github.com/goggle-source/authLotServic/internal/metric"
 	"github.com/goggle-source/authLotServic/internal/models"
 	"github.com/google/uuid"
@@ -28,14 +29,12 @@ type Database interface {
 }
 
 type ServicApp struct {
-	log      *slog.Logger
 	d        Database
 	tokenSSL *rsa.PrivateKey
 }
 
 func Init(log *slog.Logger, d Database, tokenSSL *rsa.PrivateKey) *ServicApp {
 	return &ServicApp{
-		log:      log,
 		d:        d,
 		tokenSSL: tokenSSL,
 	}
@@ -44,18 +43,12 @@ func Init(log *slog.Logger, d Database, tokenSSL *rsa.PrivateKey) *ServicApp {
 func (s *ServicApp) Register(ctx context.Context, userRegister models.UserRegister) (token string, err error) {
 	const op = "servic.Register"
 
-	log := s.log.With(
-		slog.String("op", op),
-	)
-
-	log.Info("start register user")
-
 	uid := uuid.New()
 	id := uid.String()
 
 	bytes, err := bcrypt.GenerateFromPassword([]byte(userRegister.Password), cost)
 	if err != nil {
-		return "", ValidationError(err)
+		return "", fmt.Errorf("%s error generate hash for password:%w", op, err)
 	}
 
 	userAddDatabase := models.UserAddDatabase{
@@ -67,29 +60,19 @@ func (s *ServicApp) Register(ctx context.Context, userRegister models.UserRegist
 
 	err = s.d.Register(ctx, userAddDatabase)
 	if err != nil {
-		log.Error("error register user", logger.Err(err))
-		return "", ValidationError(err)
+		return "", fmt.Errorf("%s err register in database layer:%w", op, err)
 	}
 
 	token, err = GenerateJWTToken(ctx, id, s.tokenSSL)
 	if err != nil {
-		log.Error("error generate jwt token", logger.Err(err))
-		return "", ErrGenerateJWT
+		return "", fmt.Errorf("%s:%w", err, domain.ErrGenerateJWT)
 	}
-
-	log.Info("success")
 
 	return token, nil
 }
 
 func (s *ServicApp) Login(ctx context.Context, userLogin models.UserLogin) (name string, token string, err error) {
 	const op = "servic.Login"
-
-	log := s.log.With(
-		slog.String("op", op),
-	)
-
-	log.Info("start login user")
 
 	userValidInDatabase := models.UserValidateInDatabase{
 		Email:    userLogin.Email,
@@ -98,14 +81,12 @@ func (s *ServicApp) Login(ctx context.Context, userLogin models.UserLogin) (name
 
 	name, id, err := s.d.Login(ctx, userValidInDatabase)
 	if err != nil {
-		log.Error("error login user", logger.Err(err))
-		return "", "", ValidationError(err)
+		return "", "", fmt.Errorf("%s err login in database layer:%w", op, err)
 	}
 
 	token, err = GenerateJWTToken(ctx, id, s.tokenSSL)
 	if err != nil {
-		log.Error("error generate jwt token", logger.Err(err))
-		return "", "", ErrGenerateJWT
+		return "", "", fmt.Errorf("%s:%w", err, domain.ErrGenerateJWT)
 	}
 
 	return name, token, nil
@@ -113,12 +94,6 @@ func (s *ServicApp) Login(ctx context.Context, userLogin models.UserLogin) (name
 
 func (s *ServicApp) HealthyCheack(ctx context.Context) (map[string]string, error) {
 	const op = "servic.HealthyCheck"
-
-	log := s.log.With(
-		slog.String("op", op),
-	)
-
-	log.Info("start check servic")
 
 	details := make(map[string]string)
 
@@ -154,15 +129,9 @@ func (s *ServicApp) HealthyCheack(ctx context.Context) (map[string]string, error
 func (s *ServicApp) ValidateUser(ctx context.Context, id string) (bool, error) {
 	const op = "servic.ValidateUser"
 
-	log := s.log.With(
-		slog.String("op", op),
-	)
-
-	log.Info("start validateUser", slog.String("userId", id))
-
 	isValid, err := s.d.ValidateUserId(ctx, id)
 	if err != nil {
-		return false, ValidationError(err)
+		return false, fmt.Errorf("%s err validateUserID in database layer:%w", op, err)
 	}
 
 	return isValid, err

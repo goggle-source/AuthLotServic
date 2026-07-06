@@ -17,7 +17,7 @@ type App struct {
 }
 
 func New(log *slog.Logger, cfg *config.Cfg) *App {
-	db := repository.Init(cfg, log)
+	db := repository.Init(cfg)
 
 	err := migrate.RunMigrations(cfg)
 	if err != nil {
