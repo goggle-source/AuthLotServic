@@ -1,8 +1,10 @@
 package grpc
 
 import (
+	"errors"
+
 	"github.com/go-playground/validator/v10"
-	"github.com/goggle-source/authLotServic/internal/servic"
+	"github.com/goggle-source/authLotServic/domain"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
@@ -12,21 +14,21 @@ type Err struct {
 	Err  error
 }
 
-var arrErr = map[error]Err{
-	servic.ErrGenerateJWT:    {Code: codes.Internal, Err: ErrInternal},
-	servic.ErrClientNotNull:  {Code: codes.InvalidArgument, Err: ErrClientNotNull},
-	servic.ErrValidateToken:  {Code: codes.InvalidArgument, Err: ErrNoValidToken},
-	servic.ErrClientPassword: {Code: codes.InvalidArgument, Err: ErrClientPassword},
-	servic.ErrLogin:          {Code: codes.InvalidArgument, Err: ErrLogin},
-}
-
 func ValidationError(err error) error {
-	result, ok := arrErr[err]
-	if !ok {
-		return status.Error(codes.Internal, ErrInternal.Error())
+	if errors.Is(err, domain.ErrEmail) {
+		return status.Error(codes.InvalidArgument, "such an email has already been registered")
+	}
+	if errors.Is(err, domain.ErrGenerateJWT) {
+		return status.Error(codes.Internal, "internal error")
+	}
+	if errors.Is(err, domain.ErrPasswordOrEmail) {
+		return status.Error(codes.InvalidArgument, "err in email or password")
+	}
+	if errors.Is(err, domain.ErrUserNoFound) {
+		return status.Error(codes.InvalidArgument, "err in email or password")
 	}
 
-	return status.Error(result.Code, result.Err.Error())
+	return status.Error(codes.Internal, "internal error")
 }
 
 func ValidationErrValidator(err error) error {

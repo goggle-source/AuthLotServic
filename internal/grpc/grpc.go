@@ -34,9 +34,7 @@ func Register(grpc *grpc.Server, authServ AuthServer, log *slog.Logger, val *val
 func (s *ServerAPI) Login(ctx context.Context, in *auth.LoginUserRequest) (*auth.LoginUserResponse, error) {
 	const op = "grpc.Login"
 
-	log := s.log.With(slog.String("op", op))
-
-	log.Info("start Login")
+	log := s.log.With(slog.String("op", op), slog.String("email", in.GetEmail()))
 
 	userLogin := models.UserLogin{
 		Email:    in.GetEmail(),
@@ -54,7 +52,6 @@ func (s *ServerAPI) Login(ctx context.Context, in *auth.LoginUserRequest) (*auth
 		log.Error("error login user", logger.Err(err))
 		return nil, ValidationError(err)
 	}
-	log.Info("success login")
 
 	return &auth.LoginUserResponse{
 		Token: token,
@@ -65,7 +62,7 @@ func (s *ServerAPI) Login(ctx context.Context, in *auth.LoginUserRequest) (*auth
 func (s *ServerAPI) Register(ctx context.Context, in *auth.RegisterUserRequest) (*auth.RegisterUserResponse, error) {
 	const op = "grpc.Register"
 
-	log := s.log.With(slog.String("op", op))
+	log := s.log.With(slog.String("op", op), slog.String("email", in.GetEmail()))
 
 	log.Info("start register")
 
@@ -85,7 +82,6 @@ func (s *ServerAPI) Register(ctx context.Context, in *auth.RegisterUserRequest) 
 		log.Error("error register", logger.Err(err))
 		return nil, ValidationError(err)
 	}
-	log.Info("success register")
 
 	return &auth.RegisterUserResponse{
 		Token: token,
@@ -97,8 +93,6 @@ func (s *ServerAPI) Health(ctx context.Context, in *auth.HealthCheckRequest) (*a
 
 	log := s.log.With(slog.String("op", op))
 
-	log.Info("start health")
-
 	details, err := s.auth.HealthyCheack(ctx)
 	if err != nil {
 		log.Error("error healthyCheack in service layer", logger.Err(err))
@@ -108,7 +102,6 @@ func (s *ServerAPI) Health(ctx context.Context, in *auth.HealthCheckRequest) (*a
 			},
 		}, status.Error(codes.Internal, "server error")
 	}
-	log.Info("success health")
 
 	return &auth.HealthCheckResponse{
 		Details: details,
@@ -118,9 +111,7 @@ func (s *ServerAPI) Health(ctx context.Context, in *auth.HealthCheckRequest) (*a
 func (s *ServerAPI) ValidateUserId(ctx context.Context, in *auth.UserIdRequest) (*auth.ValidIsIdResponse, error) {
 	const op = "grpc.ValidateUserId"
 
-	log := s.log.With(slog.String("op", op))
-
-	log.Info("start validateUserId")
+	log := s.log.With(slog.String("op", op), slog.String("userID", in.GetUserID()))
 
 	if in.GetUserID() == "" {
 		log.Error("is not id")
@@ -132,7 +123,6 @@ func (s *ServerAPI) ValidateUserId(ctx context.Context, in *auth.UserIdRequest) 
 		log.Error("error validateUser", logger.Err(err))
 		return &auth.ValidIsIdResponse{}, ValidationError(err)
 	}
-	log.Info("success validateUserId")
 
 	return &auth.ValidIsIdResponse{
 		IsValidId: isValid,
