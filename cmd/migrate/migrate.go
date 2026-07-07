@@ -18,7 +18,6 @@ func RunMigrations(cfg *config.Cfg) error {
 	if err != nil {
 		return err
 	}
-	defer db.Close()
 
 	driver, err := postgres.WithInstance(db, &postgres.Config{})
 	if err != nil {
@@ -32,9 +31,17 @@ func RunMigrations(cfg *config.Cfg) error {
 	if err != nil {
 		return err
 	}
-	defer m.Close()
 
 	if err := m.Up(); err != nil && err != migrate.ErrNoChange {
+		return err
+	}
+
+	if errSource, errDB := m.Close(); errSource != nil || errDB != nil {
+		_ = db.Close()
+		return fmt.Errorf("%w, %w", errDB, errSource)
+	}
+
+	if err = db.Close(); err != nil {
 		return err
 	}
 
