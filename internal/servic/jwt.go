@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/goggle-source/authLotServic/domain"
 	"github.com/golang-jwt/jwt/v5"
 )
 
@@ -14,7 +15,17 @@ type Claims struct {
 	jwt.RegisteredClaims
 }
 
-func GenerateJWTToken(ctx context.Context, id string, sercretKey *rsa.PrivateKey) (token string, err error) {
+type servicJWT struct {
+	secretKey *rsa.PrivateKey
+}
+
+func InitServicJWT(key *rsa.PrivateKey) *servicJWT {
+	return &servicJWT{
+		secretKey: key,
+	}
+}
+
+func (s *servicJWT) GenerateJWTToken(ctx context.Context, id string) (token string, err error) {
 	claims := Claims{
 		UserId: id,
 		RegisteredClaims: jwt.RegisteredClaims{
@@ -25,9 +36,9 @@ func GenerateJWTToken(ctx context.Context, id string, sercretKey *rsa.PrivateKey
 
 	tokenJWT := jwt.NewWithClaims(jwt.SigningMethodRS256, claims)
 
-	token, err = tokenJWT.SignedString(sercretKey)
+	token, err = tokenJWT.SignedString(s.secretKey)
 	if err != nil {
-		return "", fmt.Errorf("token signing error")
+		return "", fmt.Errorf("token signing error:%s", domain.ErrGenerateJWT)
 	}
 
 	return token, nil

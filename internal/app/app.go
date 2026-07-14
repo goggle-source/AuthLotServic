@@ -31,7 +31,9 @@ func New(log *slog.Logger, cfg *config.Cfg) *App {
 		panic(err)
 	}
 
-	bisnesServic := servic.Init(log, db, privateKey)
+	servicJWT := servic.InitServicJWT(privateKey)
+
+	bisnesServic := servic.Init(log, db, servicJWT)
 
 	grpcServer := grpcapp.Init(log, *bisnesServic, cfg.GRPC.Port, validate)
 

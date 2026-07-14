@@ -2,7 +2,6 @@ package servic
 
 import (
 	"context"
-	"crypto/rsa"
 	"fmt"
 	"log/slog"
 	"strconv"
@@ -28,15 +27,19 @@ type Database interface {
 	ValidateUserId(ctx context.Context, id string) (bool, error)
 }
 
-type ServicApp struct {
-	d        Database
-	tokenSSL *rsa.PrivateKey
+type JWT interface {
+	GenerateJWTToken(ctx context.Context, id string) (token string, err error)
 }
 
-func Init(log *slog.Logger, d Database, tokenSSL *rsa.PrivateKey) *ServicApp {
+type ServicApp struct {
+	d Database
+	s JWT
+}
+
+func Init(log *slog.Logger, d Database, s JWT) *ServicApp {
 	return &ServicApp{
-		d:        d,
-		tokenSSL: tokenSSL,
+		d: d,
+		s: s,
 	}
 }
 
@@ -63,7 +66,7 @@ func (s *ServicApp) Register(ctx context.Context, userRegister models.UserRegist
 		return "", fmt.Errorf("%s err register in database layer:%w", op, err)
 	}
 
-	token, err = GenerateJWTToken(ctx, id, s.tokenSSL)
+	token, err = s.s.GenerateJWTToken(ctx, id)
 	if err != nil {
 		return "", fmt.Errorf("%s:%w", err, domain.ErrGenerateJWT)
 	}
@@ -87,7 +90,7 @@ func (s *ServicApp) Login(ctx context.Context, userLogin models.UserLogin) (name
 		return "", "", fmt.Errorf("%s:%w", op, domain.ErrPasswordOrEmail)
 	}
 
-	token, err = GenerateJWTToken(ctx, id, s.tokenSSL)
+	token, err = s.s.GenerateJWTToken(ctx, id)
 	if err != nil {
 		return "", "", fmt.Errorf("%s:%w", err, domain.ErrGenerateJWT)
 	}
