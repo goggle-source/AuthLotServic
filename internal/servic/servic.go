@@ -23,7 +23,7 @@ const (
 
 type Database interface {
 	Register(ctx context.Context, userAddDatabase models.UserAddDatabase) error
-	Login(ctx context.Context, userValidateInDatabase models.UserValidateInDatabase) (name string, uid string, err error)
+	Login(ctx context.Context, userValidateInDatabase models.UserValidateInDatabase) (name string, uid string, passHash []byte, err error)
 	HealthCheack(ctx context.Context) (metric.DBMetric, error)
 	ValidateUserId(ctx context.Context, id string) (bool, error)
 }
@@ -75,13 +75,16 @@ func (s *ServicApp) Login(ctx context.Context, userLogin models.UserLogin) (name
 	const op = "servic.Login"
 
 	userValidInDatabase := models.UserValidateInDatabase{
-		Email:    userLogin.Email,
-		Password: userLogin.Password,
+		Email: userLogin.Email,
 	}
 
-	name, id, err := s.d.Login(ctx, userValidInDatabase)
+	name, id, passHash, err := s.d.Login(ctx, userValidInDatabase)
 	if err != nil {
 		return "", "", fmt.Errorf("%s err login in database layer:%w", op, err)
+	}
+
+	if err := bcrypt.CompareHashAndPassword(passHash, []byte(userLogin.Password)); err != nil {
+		return "", "", fmt.Errorf("%s:%w", op, domain.ErrPasswordOrEmail)
 	}
 
 	token, err = GenerateJWTToken(ctx, id, s.tokenSSL)

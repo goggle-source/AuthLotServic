@@ -8,6 +8,5 @@ type UserAddDatabase struct {
 }
 
 type UserValidateInDatabase struct {
-	Email    string
-	Password string
+	Email string
 }

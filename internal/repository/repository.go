@@ -13,7 +13,6 @@ import (
 	"github.com/goggle-source/authLotServic/internal/models"
 	"github.com/lib/pq"
 	_ "github.com/lib/pq"
-	"golang.org/x/crypto/bcrypt"
 )
 
 type Db struct {
@@ -62,7 +61,7 @@ func (d *Db) Register(ctx context.Context, userAddDatabase models.UserAddDatabas
 	return nil
 }
 
-func (d *Db) Login(ctx context.Context, userValidateInDatabase models.UserValidateInDatabase) (string, string, error) {
+func (d *Db) Login(ctx context.Context, userValidateInDatabase models.UserValidateInDatabase) (string, string, []byte, error) {
 	const op = "repository.Login"
 
 	var name, id string
@@ -70,17 +69,12 @@ func (d *Db) Login(ctx context.Context, userValidateInDatabase models.UserValida
 	err := d.DB.QueryRowContext(ctx, "SELECT userName, uid,  pass_hash FROM users WHERE email = $1", userValidateInDatabase.Email).Scan(&name, &id, &passHash)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return "", "", fmt.Errorf("%s:%w", op, domain.ErrUserNoFound)
+			return "", "", []byte{}, fmt.Errorf("%s:%w", op, domain.ErrUserNoFound)
 		}
-		return "", "", fmt.Errorf("%s:%w", op, err)
-	}
-	// вынести потом bcrypt в servic слой
-
-	if err := bcrypt.CompareHashAndPassword(passHash, []byte(userValidateInDatabase.Password)); err != nil {
-		return "", "", fmt.Errorf("%s:%w", op, domain.ErrPasswordOrEmail)
+		return "", "", []byte{}, fmt.Errorf("%s:%w", op, err)
 	}
 
-	return name, id, nil
+	return name, id, passHash, nil
 }
 
 func (d *Db) HealthCheack(ctx context.Context) (metric.DBMetric, error) {
