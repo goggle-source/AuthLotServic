@@ -24,7 +24,6 @@ type Database interface {
 	Register(ctx context.Context, userAddDatabase models.UserAddDatabase) error
 	Login(ctx context.Context, userValidateInDatabase models.UserValidateInDatabase) (name string, uid string, passHash []byte, err error)
 	HealthCheack(ctx context.Context) (metric.DBMetric, error)
-	ValidateUserId(ctx context.Context, id string) (bool, error)
 }
 
 type JWT interface {
@@ -129,15 +128,4 @@ func (s *ServicApp) HealthyCheack(ctx context.Context) (map[string]string, error
 	details["CountMemoryDB"] = strconv.Itoa(detailsDB.CountMemory)
 
 	return details, nil
-}
-
-func (s *ServicApp) ValidateUser(ctx context.Context, id string) (bool, error) {
-	const op = "servic.ValidateUser"
-
-	isValid, err := s.d.ValidateUserId(ctx, id)
-	if err != nil {
-		return false, fmt.Errorf("%s err validateUserID in database layer:%w", op, err)
-	}
-
-	return isValid, err
 }

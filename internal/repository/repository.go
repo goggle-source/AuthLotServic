@@ -112,23 +112,3 @@ func (d *Db) HealthCheack(ctx context.Context) (metric.DBMetric, error) {
 
 	return result, nil
 }
-
-func (d *Db) ValidateUserId(ctx context.Context, id string) (bool, error) {
-	const op = "repository.ValidateUserId"
-
-	var email string
-
-	err := d.DB.QueryRowContext(ctx, "SELECT email FROM users WHERE uid = $1", id).Scan(&email)
-	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			return false, fmt.Errorf("%s:%w", op, domain.ErrUserNoFound)
-		}
-		return false, fmt.Errorf("%s:%w", op, err)
-	}
-
-	if email != "" {
-		return true, nil
-	} else {
-		return false, nil
-	}
-}

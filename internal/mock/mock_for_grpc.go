@@ -25,8 +25,3 @@ func (m *MockAuthService) HealthyCheack(ctx context.Context) (map[string]string,
 	args := m.Called(ctx)
 	return args.Get(0).(map[string]string), args.Error(1)
 }
-
-func (m *MockAuthService) ValidateUser(ctx context.Context, userID string) (bool, error) {
-	args := m.Called(ctx, userID)
-	return args.Bool(0), args.Error(1)
-}

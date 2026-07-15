@@ -5,7 +5,8 @@ import (
 	"log/slog"
 
 	"github.com/go-playground/validator/v10"
-	auth "github.com/goggle-source/authLotProto/gen/go/auth"
+
+	"github.com/goggle-source/authLotProto/gen/go/auth"
 	"github.com/goggle-source/authLotServic/internal/lib/logger"
 	"github.com/goggle-source/authLotServic/internal/models"
 	"google.golang.org/grpc"
@@ -17,7 +18,6 @@ type AuthServer interface {
 	Register(ctx context.Context, userRequest models.UserRegister) (token string, err error)
 	Login(ctx context.Context, userLogin models.UserLogin) (name string, token string, err error)
 	HealthyCheack(ctx context.Context) (map[string]string, error)
-	ValidateUser(ctx context.Context, userID string) (bool, error)
 }
 
 type ServerAPI struct {
@@ -105,26 +105,5 @@ func (s *ServerAPI) Health(ctx context.Context, in *auth.HealthCheckRequest) (*a
 
 	return &auth.HealthCheckResponse{
 		Details: details,
-	}, nil
-}
-
-func (s *ServerAPI) ValidateUserId(ctx context.Context, in *auth.UserIdRequest) (*auth.ValidIsIdResponse, error) {
-	const op = "grpc.ValidateUserId"
-
-	log := s.log.With(slog.String("op", op), slog.String("userID", in.GetUserID()))
-
-	if in.GetUserID() == "" {
-		log.Error("is not id")
-		return &auth.ValidIsIdResponse{}, status.Error(codes.InvalidArgument, "id is required")
-	}
-
-	isValid, err := s.auth.ValidateUser(ctx, in.GetUserID())
-	if err != nil {
-		log.Error("error validateUser", logger.Err(err))
-		return &auth.ValidIsIdResponse{}, ValidationError(err)
-	}
-
-	return &auth.ValidIsIdResponse{
-		IsValidId: isValid,
 	}, nil
 }

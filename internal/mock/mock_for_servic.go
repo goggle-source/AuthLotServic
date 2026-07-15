@@ -35,8 +35,3 @@ func (m *MockDatabase) HealthCheack(ctx context.Context) (metric.DBMetric, error
 	args := m.Called(ctx)
 	return args.Get(0).(metric.DBMetric), args.Error(1)
 }
-
-func (m *MockDatabase) ValidateUserId(ctx context.Context, id string) (bool, error) {
-	args := m.Called(ctx, id)
-	return args.Bool(0), args.Error(1)
-}
